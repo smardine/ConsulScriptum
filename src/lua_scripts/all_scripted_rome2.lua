@@ -18,10 +18,28 @@ for n,v in ipairs(events.historical_events) do print(n, v) end
 --]]
 
 -- Ensure logging to a file if something goes wrong
+-- On macOS the working directory may be the filesystem root (protected),
+-- so fall back to the user's home directory.
+local __log_path
+do
+    local sep = package.config:sub(1, 1)
+    if sep == '\\' then
+        -- Windows: write relative to the current working directory
+        __log_path = 'consul.log'
+    else
+        -- macOS / Linux: write to the user's home directory
+        local home = os.getenv('HOME') or '/tmp'
+        __log_path = home .. '/Library/Application Support/Steam/steamapps/common/Total War Rome II/' .. '/consul.log'
+       
+    end
+end
+
 local __write = function(line)
-    local f = io.open('consul.log', 'a')
-    f:write(line)
-    f:close()
+    local f = io.open(__log_path, 'a')
+    if f then
+        f:write(line)
+        f:close()
+    end
 end
 
 __write('Starting consul\n')

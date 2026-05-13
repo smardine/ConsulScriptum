@@ -83,6 +83,24 @@ consul = {
 
 		consul.env.setup()
 	end,
+	--- Opens a file, prepending the OS-specific base path for relative filenames.
+	--- On Windows the path is used as-is (relative to the game CWD).
+	--- On macOS with Rome2 the base is $HOME/Library/Application Support/Steam/steamapps/common/Total War Rome II/.
+	--- @function consul.io_open
+	--- @tparam string filename The filename (relative or absolute) to open.
+	--- @tparam string mode The mode string passed to io.open.
+	--- @return file*, string The file handle and error message, as returned by io.open.
+	io_open = function(filename, mode, ...)
+		local sep = package.config:sub(1, 1)
+		if sep ~= '\\' and consul_build == "Rome2" then
+			-- macOS: only prepend base for relative paths
+			if filename:sub(1, 1) ~= '/' then
+				local home = os.getenv('HOME') or '/tmp'
+				filename = home .. '/Library/Application Support/Steam/steamapps/common/Total War Rome II/' .. filename
+			end
+		end
+		return io.open(filename, mode, ...)
+	end,
 
 	env = {
 
@@ -240,7 +258,7 @@ consul = {
 				local final_filename = filename or consul.debug.profile._filename
 				local report = consul.debug.profile._profiler.report()
 
-				local f = io.open(final_filename, "w")
+				local f = consul.io_open(final_filename, "w")
 				if f then
 					f:write(report)
 					f:close()
@@ -744,7 +762,7 @@ consul = {
 
 			log:debug("Reading config file: " .. config.path)
 
-			local f = io.open(config.path, "r")
+			local f = consul.io_open(config.path, "r")
 			if f then
 				log:debug("File exists: " .. config.path)
 				local f_content = f:read("*all")
@@ -779,7 +797,7 @@ consul = {
 		write = function(cfg)
 			local log = consul.new_log("config:write")
 			log:debug("Writing config file: " .. consul.config.path)
-			local f = io.open(consul.config.path, "w")
+			local f = consul.io_open(consul.config.path, "w")
 			if f then
 				-- remember to pass maxlevel as Rome2 LUA has no math.huge defined
 				f:write(consul.serpent.dump(cfg, { maxlevel = 10000, comment = false, indent = "\t" }))
@@ -1491,7 +1509,7 @@ consul = {
 					table.remove(hst.entries, 1)
 				end
 				-- write the entry to the history file
-				local f = io.open(hst.path, "a")
+				local f = consul.io_open(hst.path, "a")
 				if f then
 					f:write(entry .. "\n")
 					f:close()
@@ -1504,14 +1522,14 @@ consul = {
 		-- reads the initial history from the history file
 		read = function()
 			local hst = consul.history
-			local f = io.open(hst.path, "r")
+			local f = consul.io_open(hst.path, "r")
 			if f then
 				for line in f:lines() do
 					table.insert(hst.entries, line)
 				end
 				f:close()
 			else
-				local f = io.open(hst.path, "w")
+				local f = consul.io_open(hst.path, "w")
 				if f then
 					f:close()
 				end
@@ -1523,7 +1541,7 @@ consul = {
 		-- appends the current entry to the history file
 		append = function(entry)
 			local hst = consul.history
-			local f = io.open(hst.path, "a")
+			local f = consul.io_open(hst.path, "a")
 			if f then
 				f:write(entry .. "\n")
 				f:close()
@@ -1625,7 +1643,7 @@ consul = {
 		--- @usage consul.console.write("hello from script")
 		write = function(msg)
 			-- raw dump to file
-			local f = io.open(consul.console.output_path, "a")
+			local f = consul.io_open(consul.console.output_path, "a")
 			if f then
 				f:write(msg .. "\n")
 				f:close()
@@ -2698,7 +2716,7 @@ This is some information about the CliExecute functions in the base game.
 					console.clear()
 					settings._autoclear_current = 0
 					-- clear output file
-					local f = io.open(console.output_path, "w")
+					local f = consul.io_open(console.output_path, "w")
 					if f then
 						f:close()
 					end
@@ -2825,27 +2843,27 @@ consul.console.write(
 			local path = consul.scriptum.path
 			local max = consul.scriptum.max_entries
 
-			local f = io.open(path, "r")
+			local f = consul.io_open(path, "r")
 			if f then
 				f:close()
 			end
 
 			if not f then
 				-- create consul.scriptum
-				f = io.open(path, "w")
+				f = consul.io_open(path, "w")
 				if f then
 					f:write(consul.scriptum.path_example .. "\n")
 					f:close()
 				end
 
 				-- create consul_example.lua
-				f = io.open(consul.scriptum.path_example, "r")
+				f = consul.io_open(consul.scriptum.path_example, "r")
 				if f then
 					log:debug("Example script exists: " .. consul.scriptum.path_example)
 					f:close()
 				else
 					log:debug("Creating example script: " .. consul.scriptum.path_example)
-					f = io.open(consul.scriptum.path_example, "w")
+					f = consul.io_open(consul.scriptum.path_example, "w")
 					if f then
 						f:write(consul.scriptum.example_script)
 						f:close()
@@ -2884,7 +2902,7 @@ consul.console.write(
 
 			-- first read all lines to local var so we can close the file
 			local lines = {}
-			f = io.open(path, "r")
+			f = consul.io_open(path, "r")
 			if not f then
 				log:error("Could not open scriptum file, this should never happen " .. path)
 				return
@@ -2910,7 +2928,7 @@ consul.console.write(
 				-- make sure the line is not empty
 				if line ~= "" then
 					-- if the file exists, add it to the list
-					local f = io.open(line, "r")
+					local f = consul.io_open(line, "r")
 					if f then
 						f:close()
 
