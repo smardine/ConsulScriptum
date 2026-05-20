@@ -2863,9 +2863,17 @@ consul.console.write(
 					f:close()
 				else
 					log:debug("Creating example script: " .. consul.scriptum.path_example)
-					f = consul.io_open(consul.scriptum.path_example, "w")
+					-- Detect OS via path separator
+					local is_windows = package.config:sub(1, 1) == '\\'
+					local line_ending = is_windows and "\r\n" or "\n"
+
+					-- Normalize line endings then apply the correct one for the current OS
+					local script_content = consul.scriptum.example_script:gsub("\r\n", "\n"):gsub("\n", line_ending)
+
+					-- Write in binary mode to prevent automatic line ending conversion
+					f = consul.io_open(consul.scriptum.path_example, "wb")
 					if f then
-						f:write(consul.scriptum.example_script)
+						f:write(script_content)
 						f:close()
 					end
 				end
