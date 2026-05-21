@@ -2915,10 +2915,12 @@ consul.console.write(
 				log:error("Could not open scriptum file, this should never happen " .. path)
 				return
 			end
-			for line in f:lines() do
+			local content = f:read("*a") or ""
+			f:close()
+			content = content:gsub("\r\n", "\n"):gsub("\r", "\n")
+			for line in string.gmatch(content, "[^\n]+") do
 				table.insert(lines, line)
 			end
-			f:close()
 
 			log:trace("Loaded scriptum scripts: " .. consul.inspect(lines))
 
@@ -3006,7 +3008,23 @@ consul.console.write(
 					local index = string.sub(script_name, #ui.scriptum_entry + 1)
 					consul.scriptum.entry = ui.scriptum_entry_text .. index
 
-					local success, err = pcall(dofile, script)
+					local success, err = pcall(function()
+						local script_file, open_err = consul.io_open(script, "rb")
+						if not script_file then
+							error(open_err or ("Could not open script: " .. script))
+						end
+
+						local script_content = script_file:read("*a") or ""
+						script_file:close()
+						script_content = script_content:gsub("\r\n", "\n"):gsub("\r", "\n")
+
+						local chunk, load_err = loadstring(script_content, "@" .. script)
+						if not chunk then
+							error(load_err)
+						end
+
+						return chunk()
+					end)
 
 					-- Clean up after execution
 					consul.scriptum.entry = nil
