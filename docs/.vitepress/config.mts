@@ -69,12 +69,13 @@ export default withMermaid(defineConfig({
                 ]
             },
             {
-                text: 'v0.9.3',
+                text: 'v1.0.0',
                 items: [
                     {text: 'Changelog', link: '/guide/changelog'},
                     {text: 'GitHub', link: 'https://github.com/bukowa/ConsulScriptum'},
                 ]
-            }
+            },
+            { text: 'Credits', link: '/credits' }
         ],
 
         sidebar: [

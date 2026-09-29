@@ -4,7 +4,7 @@ consul_build = "Attila" -- or "Rome2", "TOB"
 
 consul = {
 
-	VERSION = "0.9.3",
+	VERSION = "1.0.0",
 	URL = "http://github.com/bukowa/ConsulScriptum",
 	AUTHOR = "Mateusz Kurowski",
 	CONTACT = "gitbukowa@gmail.com",
@@ -1666,9 +1666,13 @@ consul = {
 
 			-- find the console output component
 			local c = ui.find(ui.console_output_text_1)
-
+			-- if the component is not found, do not write in the console output, 
+			-- but still write to the file
+			if c == nil then
+				return
+			end
 			-- grab the current text
-			text = c:GetStateText()
+			local text = c:GetStateText()
 
 			-- if text is empty, we don't want to add a newline
 			if text == "" then
@@ -2833,7 +2837,7 @@ consul.console.write(
 		-- because we don't know how to create elements
 		-- dynamically, we have to set a maximum number of entries
 		-- they are pre-created in the ui file
-		max_entries = 10,
+		max_entries = 40,
 
 		-- this is a map of ui listview entries to the scripts
 		-- example scriptum_text1 -> consul_example.lua
@@ -2910,7 +2914,7 @@ consul.console.write(
 			-- now we can open the file and read its lines
 			-- each line is a path to a script that can be executed
 			-- it will be added to the listview by toggling visibility flag
-			-- we can support up to 10 scripts for now, and each script
+			-- we can support up to 40 scripts for now, and each script
 			-- has to find ui element with index +1 after the scriptum_entry
 
 			-- first read all lines to local var so we can close the file
@@ -3434,6 +3438,7 @@ consul.console.write(
 				log:debug("Setting up...")
 
 				scripts.event_handlers["CharacterSelected"]["exterminare"] = nil
+				scripts.event_handlers["SettlementSelected"]["exterminare"] = nil
 			end,
 
 			start = function()
@@ -3464,6 +3469,57 @@ consul.console.write(
 					consul._game():kill_character(target, true, true)
 				end
 
+				scripts.event_handlers["SettlementSelected"]["exterminare"] = function(context)
+					log:debug("SettlementSelected")
+
+					local garrison = context:garrison_residence()
+					local settlement = garrison:settlement_interface()
+					local region = settlement:region()
+					local target_char = nil
+
+					if settlement:has_commander() and not settlement:commander():character_type("colonel") then
+						target_char = settlement:commander()
+						log:debug("Targetting settlement commander")
+					else
+						target_char = scripts.force_exchange_garrison._get_colonel_for_garrison(garrison, true, false)
+						if target_char then
+							log:debug("Targetting garrison colonel")
+						else
+							-- Check for governor (exists in Attila and ToB, but not Rome 2)
+							local ok, has_gov = pcall(function() return region:has_governor() end)
+							if ok and has_gov then
+								local ok2, gov = pcall(function() return region:governor() end)
+								if ok2 and gov and not gov:is_null_interface() then
+									target_char = gov
+									log:debug("Targetting region governor")
+								end
+							end
+						end
+					end
+
+					if not target_char then
+						log:debug("Settlement has no garrison colonel/general/governor")
+						return
+					end
+
+					-- get the faction and forename
+					local faction = target_char:faction():name()
+					local forename = target_char:get_forename()
+
+					-- build the target
+					local target = "faction:"
+						.. tostring(faction)
+						.. ","
+						.. "forename:"
+						.. string.gsub(forename, "names_name_", "")
+
+					-- destroy
+					log:debug("Target: " .. target)
+
+					-- TODO we can switch flag to only kill character (now it kills the whole army)
+					consul._game():kill_character(target, true, true)
+				end
+
 				log:debug("Started.")
 			end,
 
@@ -3474,6 +3530,7 @@ consul.console.write(
 
 				-- unregister event handler
 				scripts.event_handlers["CharacterSelected"]["exterminare"] = nil
+				scripts.event_handlers["SettlementSelected"]["exterminare"] = nil
 				log:debug("Stopped.")
 			end,
 		},

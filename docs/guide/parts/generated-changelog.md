@@ -1,3 +1,26 @@
+## v1.0.0
+**Common:**
+- Added: Scriptum (custom scripts list) now supports up to 40 entries (previously 10).
+- Fixed: Scriptum list scrolling so all 40 entries are reachable in-game.
+
+---
+
+## v0.11.0
+**Common:**
+- Fixed: Nil exception when console output UI component is not found (#7).
+- Added: Exterminare now supports settlement targets - first click kills the commander (if any), second click kills the garrison colonel/governor.
+
+---
+
+## v0.10.0
+**Rome II specific:**
+- Now working on MacOS.
+
+**Attila specific:**
+- Now working on MacOS.
+
+---
+
 ## v0.9.3
 **Common:**
 - Fixed: consul.env.mode stack overflow in battles that prevented moving consul window
