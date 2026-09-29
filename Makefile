@@ -3,6 +3,8 @@
 GAME ?= Attila
 # Development mode (1 to enable)
 DEV ?= 0
+# macOS Steam library the game is installed in (override for a custom library)
+STEAM_LIBRARY_MACOS ?= Z:/Library/Application Support/Steam
 
 # Game-specific settings
 ifeq ($(GAME),Rome2)
@@ -11,7 +13,7 @@ ifeq ($(GAME),Rome2)
     RPFM_SCHEMA_FILE := schema_rom2.ron
     INSTALL_ALONE_DIR := D:\Games\Total War - Rome 2 Steam
     INSTALL_STEAM_DIR := E:/SteamLibrary/steamapps/common/Total War Rome II
-	INSTALL_STEAM_MACOS_DIR := Z:/Library/Application Support/Steam/steamapps/common/Total War Rome II/TotalWarRome2Data
+	INSTALL_STEAM_MACOS_DIR := $(STEAM_LIBRARY_MACOS)/steamapps/common/Total War Rome II/TotalWarRome2Data
     INSTALL_USER_SCRIPT := C:/Users/$(USERNAME)/AppData/Roaming/The\ Creative\ Assembly/Rome2/scripts
 	INSTALL_USER_SCRIPT_MACOS :=Z:/Library/Application Support/Feral Interactive/Total War ROME II/VFS/User/AppData/Roaming/The Creative Assembly/Rome2/scripts
     GAME_EXE := Rome2.exe
@@ -33,7 +35,7 @@ else ifeq ($(GAME),Attila)
     RPFM_SCHEMA_FILE := schema_att.ron
     INSTALL_ALONE_DIR := C:\Games\Total War - Attila_16
     INSTALL_STEAM_DIR := E:/SteamLibrary/steamapps/common/Total War Attila
-	INSTALL_STEAM_MACOS_DIR := Z:/Library/Application Support/Steam/steamapps/common/Total War Attila/TotalWarAttilaData
+	INSTALL_STEAM_MACOS_DIR := $(STEAM_LIBRARY_MACOS)/steamapps/common/Total War Attila/TotalWarAttilaData
     INSTALL_USER_SCRIPT := C:/Users/$(USERNAME)/AppData/Roaming/The\ Creative\ Assembly/Attila/scripts
 	INSTALL_USER_SCRIPT_MACOS :=Z:/Library/Application Support/Feral Interactive/Total War ATTILA/VFS/User/AppData/Roaming/The Creative Assembly/Attila/scripts
     GAME_EXE := Attila.exe
